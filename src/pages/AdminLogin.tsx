@@ -17,11 +17,6 @@ const AdminLogin = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await adminCall<{ token: string }>("login", undefined);
-      // adminCall already serializes payload — call differently for login
-      void res;
-    } catch {}
-    try {
       const { data, error } = await (await import("@/integrations/supabase/client")).supabase.functions.invoke("admin", {
         body: { action: "login", username, password },
       });
