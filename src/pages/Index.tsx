@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import Landing from "./Landing";
+import Onboarding from "./Onboarding";
 
 const Index = () => {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -18,7 +18,11 @@ const Index = () => {
     );
   }
   if (authed) return <Navigate to="/app" replace />;
-  return <Landing />;
+
+  // First-time visitors see onboarding; returning visitors go straight to auth
+  const onboarded = typeof window !== "undefined" && localStorage.getItem("linguo-onboarded") === "1";
+  if (onboarded) return <Navigate to="/auth" replace />;
+  return <Onboarding />;
 };
 
 export default Index;
