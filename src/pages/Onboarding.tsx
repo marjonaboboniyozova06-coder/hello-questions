@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/contexts/I18nContext";
-import { Sparkles, BookOpen, Globe, Trophy, ChevronRight } from "lucide-react";
+import { Sparkles, BookOpen, Trophy, ChevronRight } from "lucide-react";
 
 const slides = [
   {
@@ -25,11 +25,11 @@ const slides = [
   },
   {
     icon: Trophy,
-    title: { uz: "Har kuni o'sing", en: "Grow every day", ru: "Развивайтесь каждый день" },
+    title: { uz: "Yakuniy testdan o'ting", en: "Pass the final test", ru: "Сдайте финальный тест" },
     desc: {
-      uz: "Kunlik strik va premium kontent bilan natijaga erishing.",
-      en: "Daily streaks and premium content to keep you on track.",
-      ru: "Ежедневная серия и премиум-контент для прогресса.",
+      uz: "Har bir daraja oxirida testni topshiring va keyingi darajaga o'ting.",
+      en: "Take the test at the end of each level to unlock the next one.",
+      ru: "Сдайте тест в конце уровня, чтобы открыть следующий.",
     },
   },
 ];
@@ -41,12 +41,14 @@ const Onboarding = () => {
 
   const finish = () => {
     localStorage.setItem("linguo-onboarded", "1");
+    navigate("/app");
   };
 
   const next = () => {
     if (i < slides.length - 1) setI(i + 1);
+    else finish();
   };
-  const skip = () => setI(slides.length - 1);
+  const skip = () => finish();
 
   const slide = slides[i];
   const Icon = slide.icon;
@@ -61,11 +63,9 @@ const Onboarding = () => {
           </div>
           <span className="font-bold">{t("appName")}</span>
         </div>
-        {!isLast && (
-          <button onClick={skip} className="text-sm text-muted-foreground font-medium">
-            {lang === "uz" ? "O'tkazib yuborish" : lang === "ru" ? "Пропустить" : "Skip"}
-          </button>
-        )}
+        <button onClick={skip} className="text-sm text-muted-foreground font-medium">
+          {lang === "uz" ? "O'tkazib yuborish" : lang === "ru" ? "Пропустить" : "Skip"}
+        </button>
       </div>
 
       <main className="flex-1 mx-auto w-full max-w-md px-6 flex flex-col items-center justify-center text-center">
@@ -76,12 +76,8 @@ const Onboarding = () => {
           </div>
         </div>
 
-        <h1 className="text-3xl font-extrabold mb-3 leading-tight">
-          {slide.title[lang]}
-        </h1>
-        <p className="text-muted-foreground text-base leading-relaxed max-w-sm">
-          {slide.desc[lang]}
-        </p>
+        <h1 className="text-3xl font-extrabold mb-3 leading-tight">{slide.title[lang]}</h1>
+        <p className="text-muted-foreground text-base leading-relaxed max-w-sm">{slide.desc[lang]}</p>
 
         <div className="flex items-center gap-2 mt-10">
           {slides.map((_, idx) => (
@@ -95,41 +91,15 @@ const Onboarding = () => {
         </div>
       </main>
 
-      <div className="mx-auto w-full max-w-md px-6 pb-8 space-y-3">
-        {!isLast ? (
-          <Button
-            size="lg"
-            onClick={next}
-            className="w-full h-14 rounded-2xl text-base font-bold bg-gradient-to-r from-primary via-secondary to-accent shadow-glow"
-          >
-            {lang === "uz" ? "Keyingi" : lang === "ru" ? "Далее" : "Next"}
-            <ChevronRight className="w-5 h-5" />
-          </Button>
-        ) : (
-          <>
-            <Button
-              size="lg"
-              onClick={() => {
-                finish();
-                navigate("/auth?mode=signup");
-              }}
-              className="w-full h-14 rounded-2xl text-base font-bold bg-gradient-to-r from-primary via-secondary to-accent shadow-glow"
-            >
-              {t("signup")}
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => {
-                finish();
-                navigate("/auth?mode=login");
-              }}
-              className="w-full h-14 rounded-2xl text-base font-bold glass border-border"
-            >
-              {t("login")}
-            </Button>
-          </>
-        )}
+      <div className="mx-auto w-full max-w-md px-6 pb-8">
+        <Button
+          size="lg"
+          onClick={next}
+          className="w-full h-14 rounded-2xl text-base font-bold bg-gradient-to-r from-primary via-secondary to-accent shadow-glow"
+        >
+          {isLast ? (lang === "uz" ? "Boshlash" : lang === "ru" ? "Начать" : "Get Started") : (lang === "uz" ? "Keyingi" : lang === "ru" ? "Далее" : "Next")}
+          <ChevronRight className="w-5 h-5" />
+        </Button>
       </div>
     </div>
   );

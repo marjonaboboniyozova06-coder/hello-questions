@@ -1,9 +1,8 @@
+import { Moon, Sun, Info, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Moon, Sun, Globe, Info, LogOut, ChevronRight } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useI18n, LangCode } from "@/contexts/I18nContext";
 import { Switch } from "@/components/ui/switch";
-import { supabase } from "@/integrations/supabase/client";
 
 const APP_VERSION = "1.0.0";
 
@@ -17,11 +16,6 @@ const Settings = () => {
     { code: "en", label: "English", flag: "🇬🇧" },
     { code: "ru", label: "Русский", flag: "🇷🇺" },
   ];
-
-  const logout = async () => {
-    await supabase.auth.signOut();
-    navigate("/", { replace: true });
-  };
 
   return (
     <div className="px-6 pt-10 pb-6">
@@ -87,14 +81,13 @@ const Settings = () => {
       </Section>
 
       <button
-        onClick={logout}
-        className="w-full glass rounded-2xl p-4 shadow-soft flex items-center gap-3 text-destructive"
+        onClick={() => navigate("/admin")}
+        className="w-full glass rounded-2xl p-4 shadow-soft flex items-center gap-3 text-muted-foreground"
       >
-        <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
-          <LogOut className="w-5 h-5" />
+        <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+          <Shield className="w-5 h-5" />
         </div>
-        <span className="font-semibold text-sm flex-1 text-left">{t("logout")}</span>
-        <ChevronRight className="w-4 h-4" />
+        <span className="font-semibold text-sm flex-1 text-left">Admin</span>
       </button>
     </div>
   );

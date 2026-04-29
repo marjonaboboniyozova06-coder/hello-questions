@@ -14,7 +14,166 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admin_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          token?: string
+        }
+        Relationships: []
+      }
+      device_progress: {
+        Row: {
+          device_id: string
+          id: string
+          level_code: string
+          passed: boolean
+          score: number
+          updated_at: string
+        }
+        Insert: {
+          device_id: string
+          id?: string
+          level_code: string
+          passed?: boolean
+          score?: number
+          updated_at?: string
+        }
+        Update: {
+          device_id?: string
+          id?: string
+          level_code?: string
+          passed?: boolean
+          score?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lessons: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          kind: string
+          level_id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          level_id: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          level_id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      levels: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_locked: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_locked?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_locked?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      test_questions: {
+        Row: {
+          correct_index: number
+          created_at: string
+          id: string
+          level_id: string
+          options: Json
+          question: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          correct_index?: number
+          created_at?: string
+          id?: string
+          level_id: string
+          options?: Json
+          question: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          correct_index?: number
+          created_at?: string
+          id?: string
+          level_id?: string
+          options?: Json
+          question?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_questions_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
