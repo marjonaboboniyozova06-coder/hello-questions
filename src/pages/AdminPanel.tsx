@@ -233,7 +233,7 @@ const QuestionsManager = ({ levelId, items, reload }: any) => {
     setEditing({ question: "", options: ["", "", "", ""], correct_index: 0, level_id: levelId, sort_order: items.length });
     setOpen(true);
   };
-  const startEdit = (it: any) => setEditing({ ...it, options: [...it.options] }) || setOpen(true);
+  const startEdit = (it: any) => { setEditing({ ...it, options: [...it.options] }); setOpen(true); };
   const save = async () => {
     try {
       if (editing.id) {
