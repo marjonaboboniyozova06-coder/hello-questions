@@ -243,11 +243,6 @@ const LessonsManager = ({ levelId, kind, items, reload }: any) => {
     </div>
   );
 };
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
 
 const QuestionsManager = ({ levelId, items, reload }: any) => {
   const { toast } = useToast();
