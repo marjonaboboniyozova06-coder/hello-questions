@@ -32,6 +32,33 @@ export type Database = {
         }
         Relationships: []
       }
+      device_premium: {
+        Row: {
+          device_id: string
+          expires_at: string | null
+          granted_at: string | null
+          granted_by: string | null
+          is_premium: boolean
+          updated_at: string
+        }
+        Insert: {
+          device_id: string
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          is_premium?: boolean
+          updated_at?: string
+        }
+        Update: {
+          device_id?: string
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          is_premium?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       device_progress: {
         Row: {
           device_id: string
@@ -64,6 +91,7 @@ export type Database = {
           content: string | null
           created_at: string
           id: string
+          is_premium: boolean
           kind: string
           level_id: string
           sort_order: number
@@ -74,6 +102,7 @@ export type Database = {
           content?: string | null
           created_at?: string
           id?: string
+          is_premium?: boolean
           kind?: string
           level_id: string
           sort_order?: number
@@ -84,6 +113,7 @@ export type Database = {
           content?: string | null
           created_at?: string
           id?: string
+          is_premium?: boolean
           kind?: string
           level_id?: string
           sort_order?: number
@@ -107,6 +137,7 @@ export type Database = {
           description: string | null
           id: string
           is_locked: boolean
+          is_premium: boolean
           sort_order: number
           title: string
           updated_at: string
@@ -117,6 +148,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_locked?: boolean
+          is_premium?: boolean
           sort_order?: number
           title: string
           updated_at?: string
@@ -127,9 +159,52 @@ export type Database = {
           description?: string | null
           id?: string
           is_locked?: boolean
+          is_premium?: boolean
           sort_order?: number
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_requests: {
+        Row: {
+          amount_uzs: number
+          card_holder: string | null
+          card_last4: string | null
+          created_at: string
+          device_id: string
+          id: string
+          method: string
+          note: string | null
+          plan: string
+          reviewed_at: string | null
+          status: string
+        }
+        Insert: {
+          amount_uzs: number
+          card_holder?: string | null
+          card_last4?: string | null
+          created_at?: string
+          device_id: string
+          id?: string
+          method: string
+          note?: string | null
+          plan: string
+          reviewed_at?: string | null
+          status?: string
+        }
+        Update: {
+          amount_uzs?: number
+          card_holder?: string | null
+          card_last4?: string | null
+          created_at?: string
+          device_id?: string
+          id?: string
+          method?: string
+          note?: string | null
+          plan?: string
+          reviewed_at?: string | null
+          status?: string
         }
         Relationships: []
       }
