@@ -9,6 +9,7 @@ export type LevelRow = {
   description: string | null;
   sort_order: number;
   is_locked: boolean;
+  is_premium?: boolean;
 };
 
 export type LessonRow = {
