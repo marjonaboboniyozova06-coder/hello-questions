@@ -111,11 +111,13 @@ Deno.serve(async (req) => {
 
       // ----- Stats -----
       case "stats": {
-        const [levels, lessons, questions, progress] = await Promise.all([
+        const [levels, lessons, questions, progress, premium, pending] = await Promise.all([
           supabase.from("levels").select("id", { count: "exact", head: true }),
           supabase.from("lessons").select("id", { count: "exact", head: true }),
           supabase.from("test_questions").select("id", { count: "exact", head: true }),
           supabase.from("device_progress").select("device_id"),
+          supabase.from("device_premium").select("device_id", { count: "exact", head: true }).eq("is_premium", true),
+          supabase.from("payment_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
         ]);
         const uniqueDevices = new Set((progress.data || []).map((p: any) => p.device_id)).size;
         return json({
@@ -123,7 +125,85 @@ Deno.serve(async (req) => {
           lessons: lessons.count ?? 0,
           questions: questions.count ?? 0,
           users: uniqueDevices,
+          premium: premium.count ?? 0,
+          pending_payments: pending.count ?? 0,
         });
+      }
+
+      // ----- Payment requests -----
+      case "list_payments": {
+        const { data, error } = await supabase
+          .from("payment_requests")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(200);
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+      case "approve_payment": {
+        const { id } = body.payload;
+        const { data: pr, error: prErr } = await supabase
+          .from("payment_requests")
+          .select("*")
+          .eq("id", id)
+          .maybeSingle();
+        if (prErr || !pr) return json({ error: "Request not found" }, 404);
+        // Mark approved
+        await supabase.from("payment_requests").update({
+          status: "approved",
+          reviewed_at: new Date().toISOString(),
+        }).eq("id", id);
+        // Grant premium
+        const expires = new Date();
+        if (pr.plan === "yearly") expires.setFullYear(expires.getFullYear() + 1);
+        else expires.setMonth(expires.getMonth() + 1);
+        const { error: upErr } = await supabase.from("device_premium").upsert({
+          device_id: pr.device_id,
+          is_premium: true,
+          granted_at: new Date().toISOString(),
+          granted_by: "admin",
+          expires_at: expires.toISOString(),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "device_id" });
+        if (upErr) return json({ error: upErr.message }, 400);
+        return json({ ok: true });
+      }
+      case "reject_payment": {
+        const { id, note } = body.payload;
+        const { error } = await supabase.from("payment_requests").update({
+          status: "rejected",
+          note: note || null,
+          reviewed_at: new Date().toISOString(),
+        }).eq("id", id);
+        if (error) return json({ error: error.message }, 400);
+        return json({ ok: true });
+      }
+
+      // ----- Premium management -----
+      case "list_premium": {
+        const { data, error } = await supabase
+          .from("device_premium")
+          .select("*")
+          .order("updated_at", { ascending: false })
+          .limit(500);
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+      case "set_premium": {
+        const { device_id, is_premium, plan } = body.payload;
+        const expires = new Date();
+        if (plan === "yearly") expires.setFullYear(expires.getFullYear() + 1);
+        else expires.setMonth(expires.getMonth() + 1);
+        const { error } = await supabase.from("device_premium").upsert({
+          device_id,
+          is_premium,
+          granted_at: is_premium ? new Date().toISOString() : null,
+          granted_by: is_premium ? "admin" : null,
+          expires_at: is_premium ? expires.toISOString() : null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "device_id" });
+        if (error) return json({ error: error.message }, 400);
+        return json({ ok: true });
       }
 
       default:
