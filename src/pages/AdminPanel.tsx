@@ -228,9 +228,21 @@ const LessonsManager = ({ levelId, kind, items, reload }: any) => {
                 <label className="text-xs font-bold uppercase">Order</label>
                 <Input type="number" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} />
               </div>
+              <label className="flex items-center gap-2 text-sm">
+                <Switch
+                  checked={!!editing.is_premium}
+                  onCheckedChange={(v) => setEditing({ ...editing, is_premium: v })}
+                />
+                <Crown className="w-4 h-4 text-amber-500" /> Premium only
+              </label>
               <Button onClick={save} className="w-full">Save</Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
         </DialogContent>
       </Dialog>
     </div>
