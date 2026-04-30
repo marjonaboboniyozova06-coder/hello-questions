@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Edit2, LogOut, Lock, Unlock, BookOpen, GraduationCap, Trophy, Users } from "lucide-react";
+import { Plus, Trash2, Edit2, LogOut, Lock, Unlock, BookOpen, GraduationCap, Trophy, Users, Crown, CreditCard, Check, X } from "lucide-react";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -62,40 +62,53 @@ const AdminPanel = () => {
       </header>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-6 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 px-6 mb-6">
         <StatCard icon={BookOpen} label="Levels" value={stats?.levels ?? "—"} />
         <StatCard icon={GraduationCap} label="Lessons" value={stats?.lessons ?? "—"} />
         <StatCard icon={Trophy} label="Test Qs" value={stats?.questions ?? "—"} />
         <StatCard icon={Users} label="Users" value={stats?.users ?? "—"} />
+        <StatCard icon={Crown} label="Premium" value={stats?.premium ?? "—"} />
+        <StatCard icon={CreditCard} label="Pending" value={stats?.pending_payments ?? "—"} />
       </div>
 
-      {/* Levels list with lock toggle */}
-      <section className="px-6 mb-6">
-        <h2 className="text-lg font-bold mb-3">Levels</h2>
-        <div className="space-y-2">
-          {levels.map((lvl) => (
-            <div key={lvl.id} className="glass rounded-2xl p-4 flex items-center gap-3 shadow-soft">
-              <button
-                onClick={() => setSelectedCode(lvl.code)}
-                className={`flex-1 text-left ${selectedCode === lvl.code ? "text-primary" : ""}`}
-              >
-                <p className="font-bold">{lvl.code} — {lvl.title}</p>
-                <p className="text-xs text-muted-foreground">{lvl.description}</p>
-              </button>
-              <div className="flex items-center gap-2">
-                {lvl.is_locked ? <Lock className="w-4 h-4 text-muted-foreground" /> : <Unlock className="w-4 h-4 text-emerald-500" />}
-                <Switch checked={!lvl.is_locked} onCheckedChange={() => toggleLock(lvl)} />
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Toggle to force-unlock a level for everyone (overrides the test-pass requirement).
-        </p>
-      </section>
+      <Tabs defaultValue="content" className="px-6">
+        <TabsList className="grid grid-cols-3 w-full bg-muted rounded-2xl h-12 p-1 mb-4">
+          <TabsTrigger value="content" className="rounded-xl">Content</TabsTrigger>
+          <TabsTrigger value="payments" className="rounded-xl">Payments</TabsTrigger>
+          <TabsTrigger value="premium" className="rounded-xl">Premium</TabsTrigger>
+        </TabsList>
 
-      {/* Per-level content editor */}
-      {selectedCode && <LevelEditor code={selectedCode} />}
+        <TabsContent value="content">
+          {/* Levels list with lock toggle */}
+          <h2 className="text-lg font-bold mb-3">Levels</h2>
+          <div className="space-y-2 mb-6">
+            {levels.map((lvl) => (
+              <div key={lvl.id} className="glass rounded-2xl p-4 flex items-center gap-3 shadow-soft">
+                <button
+                  onClick={() => setSelectedCode(lvl.code)}
+                  className={`flex-1 text-left ${selectedCode === lvl.code ? "text-primary" : ""}`}
+                >
+                  <p className="font-bold">{lvl.code} — {lvl.title}</p>
+                  <p className="text-xs text-muted-foreground">{lvl.description}</p>
+                </button>
+                <div className="flex items-center gap-2">
+                  {lvl.is_locked ? <Lock className="w-4 h-4 text-muted-foreground" /> : <Unlock className="w-4 h-4 text-emerald-500" />}
+                  <Switch checked={!lvl.is_locked} onCheckedChange={() => toggleLock(lvl)} />
+                </div>
+              </div>
+            ))}
+          </div>
+          {selectedCode && <LevelEditor code={selectedCode} />}
+        </TabsContent>
+
+        <TabsContent value="payments">
+          <PaymentsManager />
+        </TabsContent>
+
+        <TabsContent value="premium">
+          <PremiumManager />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
@@ -215,6 +228,13 @@ const LessonsManager = ({ levelId, kind, items, reload }: any) => {
                 <label className="text-xs font-bold uppercase">Order</label>
                 <Input type="number" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} />
               </div>
+              <label className="flex items-center gap-2 text-sm">
+                <Switch
+                  checked={!!editing.is_premium}
+                  onCheckedChange={(v) => setEditing({ ...editing, is_premium: v })}
+                />
+                <Crown className="w-4 h-4 text-amber-500" /> Premium only
+              </label>
               <Button onClick={save} className="w-full">Save</Button>
             </div>
           )}

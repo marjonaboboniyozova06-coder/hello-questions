@@ -2,3 +2,9 @@ project_id = "endwvyvppqjnjqtmnnjp"
 
 [functions.admin]
 verify_jwt = false
+
+[functions.ai-tutor]
+verify_jwt = false
+
+[functions.payments]
+verify_jwt = false
