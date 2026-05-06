@@ -347,4 +347,93 @@ const QuestionsManager = ({ levelId, items, reload }: any) => {
   );
 };
 
+const PaymentsManager = () => {
+  const { toast } = useToast();
+  const [requests, setRequests] = useState<any[]>([]);
+  const load = () => adminCall<any>("list_payments").then((r) => setRequests(r?.requests || r || [])).catch(() => {});
+  useEffect(() => { load(); }, []);
+  const act = async (id: string, status: "approved" | "rejected") => {
+    try {
+      await adminCall("update_payment", { id, status });
+      toast({ title: status === "approved" ? "Approved & premium granted" : "Rejected" });
+      load();
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    }
+  };
+  return (
+    <div className="space-y-2">
+      {requests.length === 0 && <p className="text-sm text-muted-foreground">No payment requests.</p>}
+      {requests.map((r) => (
+        <div key={r.id} className="glass rounded-2xl p-4 shadow-soft">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="font-bold">{r.method?.toUpperCase()} • {r.plan}</p>
+              <p className="text-xs text-muted-foreground">{r.amount_uzs?.toLocaleString()} UZS • ****{r.card_last4 || "----"}</p>
+              <p className="text-xs text-muted-foreground truncate">device: {r.device_id}</p>
+            </div>
+            <span className={`text-xs font-bold uppercase px-2 py-1 rounded-full ${
+              r.status === "pending" ? "bg-amber-500/20 text-amber-600" :
+              r.status === "approved" ? "bg-emerald-500/20 text-emerald-600" :
+              "bg-destructive/20 text-destructive"
+            }`}>{r.status}</span>
+          </div>
+          {r.status === "pending" && (
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => act(r.id, "approved")} className="flex-1 rounded-xl">
+                <Check className="w-4 h-4" /> Approve
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => act(r.id, "rejected")} className="flex-1 rounded-xl">
+                <X className="w-4 h-4" /> Reject
+              </Button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const PremiumManager = () => {
+  const { toast } = useToast();
+  const [deviceId, setDeviceId] = useState("");
+  const [list, setList] = useState<any[]>([]);
+  const load = () => adminCall<any>("list_premium").then((r) => setList(r?.devices || r || [])).catch(() => {});
+  useEffect(() => { load(); }, []);
+  const set = async (device_id: string, is_premium: boolean) => {
+    try {
+      await adminCall("set_premium", { device_id, is_premium });
+      toast({ title: is_premium ? "Premium granted" : "Premium revoked" });
+      load();
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    }
+  };
+  return (
+    <div className="space-y-3">
+      <div className="glass rounded-2xl p-4 shadow-soft">
+        <label className="text-xs font-bold uppercase">Grant by Device ID</label>
+        <div className="flex gap-2 mt-2">
+          <Input value={deviceId} onChange={(e) => setDeviceId(e.target.value)} placeholder="device_id..." />
+          <Button onClick={() => deviceId && set(deviceId, true)} className="rounded-xl">
+            <Crown className="w-4 h-4" /> Grant
+          </Button>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {list.length === 0 && <p className="text-sm text-muted-foreground">No premium devices.</p>}
+        {list.map((d) => (
+          <div key={d.device_id} className="glass rounded-2xl p-3 flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold truncate">{d.device_id}</p>
+              <p className="text-xs text-muted-foreground">{d.is_premium ? "Active" : "Inactive"}{d.expires_at ? ` • exp ${new Date(d.expires_at).toLocaleDateString()}` : ""}</p>
+            </div>
+            <Switch checked={!!d.is_premium} onCheckedChange={(v) => set(d.device_id, v)} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export default AdminPanel;
