@@ -350,11 +350,11 @@ const QuestionsManager = ({ levelId, items, reload }: any) => {
 const PaymentsManager = () => {
   const { toast } = useToast();
   const [requests, setRequests] = useState<any[]>([]);
-  const load = () => adminCall<any>("list_payments").then((r) => setRequests(r?.requests || r || [])).catch(() => {});
+  const load = () => adminCall<any>("list_payments").then((r) => setRequests(r?.data || [])).catch(() => {});
   useEffect(() => { load(); }, []);
   const act = async (id: string, status: "approved" | "rejected") => {
     try {
-      await adminCall("update_payment", { id, status });
+      await adminCall(status === "approved" ? "approve_payment" : "reject_payment", { id });
       toast({ title: status === "approved" ? "Approved & premium granted" : "Rejected" });
       load();
     } catch (e: any) {
