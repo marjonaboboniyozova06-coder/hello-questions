@@ -398,7 +398,7 @@ const PremiumManager = () => {
   const { toast } = useToast();
   const [deviceId, setDeviceId] = useState("");
   const [list, setList] = useState<any[]>([]);
-  const load = () => adminCall<any>("list_premium").then((r) => setList(r?.devices || r || [])).catch(() => {});
+  const load = () => adminCall<any>("list_premium").then((r) => setList(r?.data || [])).catch(() => {});
   useEffect(() => { load(); }, []);
   const set = async (device_id: string, is_premium: boolean) => {
     try {
