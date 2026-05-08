@@ -206,6 +206,33 @@ Deno.serve(async (req) => {
         return json({ ok: true });
       }
 
+      // ----- Settings (admin card etc) -----
+      case "get_settings": {
+        const { data } = await supabase.from("app_settings").select("*");
+        return json({ data });
+      }
+      case "update_setting": {
+        const { key, value } = body.payload;
+        const { error } = await supabase.from("app_settings").upsert({
+          key, value, updated_at: new Date().toISOString(),
+        }, { onConflict: "key" });
+        if (error) return json({ error: error.message }, 400);
+        return json({ ok: true });
+      }
+
+      // ----- Block / unblock device -----
+      case "block_device": {
+        const { device_id, blocked } = body.payload;
+        const { error } = await supabase.from("device_premium").upsert({
+          device_id,
+          is_premium: false,
+          is_blocked: !!blocked,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "device_id" });
+        if (error) return json({ error: error.message }, 400);
+        return json({ ok: true });
+      }
+
       default:
         return json({ error: "Unknown action" }, 400);
     }
