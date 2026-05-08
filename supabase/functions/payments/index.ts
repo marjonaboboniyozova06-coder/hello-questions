@@ -52,19 +52,24 @@ Deno.serve(async (req) => {
       return json({ ok: true, request: data });
     }
 
+    if (action === "get_admin_card") {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "admin_card").maybeSingle();
+      return json({ card: data?.value ?? null });
+    }
+
     if (action === "check_premium") {
       const { device_id } = body;
-      if (!device_id) return json({ is_premium: false });
+      if (!device_id) return json({ is_premium: false, is_blocked: false });
       const { data } = await supabase
         .from("device_premium")
-        .select("is_premium, expires_at")
+        .select("is_premium, expires_at, is_blocked")
         .eq("device_id", device_id)
         .maybeSingle();
       let active = !!data?.is_premium;
       if (active && data?.expires_at && new Date(data.expires_at).getTime() < Date.now()) {
         active = false;
       }
-      return json({ is_premium: active, expires_at: data?.expires_at ?? null });
+      return json({ is_premium: active, is_blocked: !!data?.is_blocked, expires_at: data?.expires_at ?? null });
     }
 
     return json({ error: "Unknown action" }, 400);
