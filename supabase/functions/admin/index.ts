@@ -170,12 +170,21 @@ Deno.serve(async (req) => {
       }
       case "reject_payment": {
         const { id, note } = body.payload;
+        const { data: pr } = await supabase.from("payment_requests").select("device_id").eq("id", id).maybeSingle();
         const { error } = await supabase.from("payment_requests").update({
           status: "rejected",
           note: note || null,
           reviewed_at: new Date().toISOString(),
         }).eq("id", id);
         if (error) return json({ error: error.message }, 400);
+        if (pr?.device_id) {
+          await supabase.from("device_premium").upsert({
+            device_id: pr.device_id,
+            is_premium: false,
+            is_blocked: true,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "device_id" });
+        }
         return json({ ok: true });
       }
 
