@@ -32,12 +32,31 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       device_premium: {
         Row: {
           device_id: string
           expires_at: string | null
           granted_at: string | null
           granted_by: string | null
+          is_blocked: boolean
           is_premium: boolean
           updated_at: string
         }
@@ -46,6 +65,7 @@ export type Database = {
           expires_at?: string | null
           granted_at?: string | null
           granted_by?: string | null
+          is_blocked?: boolean
           is_premium?: boolean
           updated_at?: string
         }
@@ -54,6 +74,7 @@ export type Database = {
           expires_at?: string | null
           granted_at?: string | null
           granted_by?: string | null
+          is_blocked?: boolean
           is_premium?: boolean
           updated_at?: string
         }

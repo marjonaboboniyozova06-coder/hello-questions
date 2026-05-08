@@ -170,12 +170,21 @@ Deno.serve(async (req) => {
       }
       case "reject_payment": {
         const { id, note } = body.payload;
+        const { data: pr } = await supabase.from("payment_requests").select("device_id").eq("id", id).maybeSingle();
         const { error } = await supabase.from("payment_requests").update({
           status: "rejected",
           note: note || null,
           reviewed_at: new Date().toISOString(),
         }).eq("id", id);
         if (error) return json({ error: error.message }, 400);
+        if (pr?.device_id) {
+          await supabase.from("device_premium").upsert({
+            device_id: pr.device_id,
+            is_premium: false,
+            is_blocked: true,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "device_id" });
+        }
         return json({ ok: true });
       }
 
@@ -200,6 +209,33 @@ Deno.serve(async (req) => {
           granted_at: is_premium ? new Date().toISOString() : null,
           granted_by: is_premium ? "admin" : null,
           expires_at: is_premium ? expires.toISOString() : null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "device_id" });
+        if (error) return json({ error: error.message }, 400);
+        return json({ ok: true });
+      }
+
+      // ----- Settings (admin card etc) -----
+      case "get_settings": {
+        const { data } = await supabase.from("app_settings").select("*");
+        return json({ data });
+      }
+      case "update_setting": {
+        const { key, value } = body.payload;
+        const { error } = await supabase.from("app_settings").upsert({
+          key, value, updated_at: new Date().toISOString(),
+        }, { onConflict: "key" });
+        if (error) return json({ error: error.message }, 400);
+        return json({ ok: true });
+      }
+
+      // ----- Block / unblock device -----
+      case "block_device": {
+        const { device_id, blocked } = body.payload;
+        const { error } = await supabase.from("device_premium").upsert({
+          device_id,
+          is_premium: false,
+          is_blocked: !!blocked,
           updated_at: new Date().toISOString(),
         }, { onConflict: "device_id" });
         if (error) return json({ error: error.message }, 400);

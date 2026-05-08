@@ -72,10 +72,11 @@ const AdminPanel = () => {
       </div>
 
       <Tabs defaultValue="content" className="px-6">
-        <TabsList className="grid grid-cols-3 w-full bg-muted rounded-2xl h-12 p-1 mb-4">
+        <TabsList className="grid grid-cols-4 w-full bg-muted rounded-2xl h-12 p-1 mb-4">
           <TabsTrigger value="content" className="rounded-xl">Content</TabsTrigger>
           <TabsTrigger value="payments" className="rounded-xl">Payments</TabsTrigger>
           <TabsTrigger value="premium" className="rounded-xl">Premium</TabsTrigger>
+          <TabsTrigger value="settings" className="rounded-xl">Card</TabsTrigger>
         </TabsList>
 
         <TabsContent value="content">
@@ -107,6 +108,10 @@ const AdminPanel = () => {
 
         <TabsContent value="premium">
           <PremiumManager />
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <SettingsManager />
         </TabsContent>
       </Tabs>
     </div>
@@ -437,3 +442,69 @@ const PremiumManager = () => {
 };
 
 export default AdminPanel;
+
+const SettingsManager = () => {
+  const { toast } = useToast();
+  const [card, setCard] = useState({ card_number: "", card_holder: "", bank: "Humo", phone: "" });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    adminCall<any>("get_settings").then((res) => {
+      const ac = (res?.data || []).find((s: any) => s.key === "admin_card");
+      if (ac?.value) setCard({ card_number: "", card_holder: "", bank: "Humo", phone: "", ...ac.value });
+    }).catch(() => {});
+  }, []);
+
+  const save = async () => {
+    setLoading(true);
+    try {
+      await adminCall("update_setting", { key: "admin_card", value: card });
+      toast({ title: "Saved", description: "Karta yangilandi" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="glass rounded-2xl p-5 shadow-soft space-y-3">
+      <h2 className="text-lg font-bold mb-2">Admin to'lov kartasi</h2>
+      <p className="text-xs text-muted-foreground mb-3">
+        Bu karta foydalanuvchilarga to'lov uchun ko'rsatiladi. Pul tushgach Payments tabidan tasdiqlang.
+      </p>
+      <div>
+        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Karta raqami</label>
+        <Input
+          value={card.card_number}
+          onChange={(e) => setCard({ ...card, card_number: e.target.value.replace(/\D/g, "").slice(0, 16) })}
+          placeholder="0000000000000000"
+          className="h-12 rounded-xl font-mono mt-1"
+          inputMode="numeric"
+        />
+      </div>
+      <div>
+        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Karta egasi</label>
+        <Input
+          value={card.card_holder}
+          onChange={(e) => setCard({ ...card, card_holder: e.target.value.toUpperCase() })}
+          placeholder="POLATOV BOBOYOR"
+          className="h-12 rounded-xl uppercase mt-1"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Bank</label>
+          <Input value={card.bank} onChange={(e) => setCard({ ...card, bank: e.target.value })} className="h-12 rounded-xl mt-1" />
+        </div>
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Telefon</label>
+          <Input value={card.phone} onChange={(e) => setCard({ ...card, phone: e.target.value })} placeholder="+998..." className="h-12 rounded-xl mt-1" />
+        </div>
+      </div>
+      <Button onClick={save} disabled={loading} className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-secondary shadow-glow font-bold mt-2">
+        {loading ? "..." : "Saqlash"}
+      </Button>
+    </div>
+  );
+};
