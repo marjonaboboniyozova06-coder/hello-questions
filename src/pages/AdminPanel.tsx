@@ -72,10 +72,11 @@ const AdminPanel = () => {
       </div>
 
       <Tabs defaultValue="content" className="px-6">
-        <TabsList className="grid grid-cols-3 w-full bg-muted rounded-2xl h-12 p-1 mb-4">
+        <TabsList className="grid grid-cols-4 w-full bg-muted rounded-2xl h-12 p-1 mb-4">
           <TabsTrigger value="content" className="rounded-xl">Content</TabsTrigger>
           <TabsTrigger value="payments" className="rounded-xl">Payments</TabsTrigger>
           <TabsTrigger value="premium" className="rounded-xl">Premium</TabsTrigger>
+          <TabsTrigger value="settings" className="rounded-xl">Card</TabsTrigger>
         </TabsList>
 
         <TabsContent value="content">
