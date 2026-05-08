@@ -109,6 +109,10 @@ const AdminPanel = () => {
         <TabsContent value="premium">
           <PremiumManager />
         </TabsContent>
+
+        <TabsContent value="settings">
+          <SettingsManager />
+        </TabsContent>
       </Tabs>
     </div>
   );
