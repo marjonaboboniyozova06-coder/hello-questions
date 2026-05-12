@@ -111,20 +111,19 @@ Deno.serve(async (req) => {
 
       // ----- Stats -----
       case "stats": {
-        const [levels, lessons, questions, progress, premium, pending] = await Promise.all([
+        const [levels, lessons, questions, sessions, premium, pending] = await Promise.all([
           supabase.from("levels").select("id", { count: "exact", head: true }),
           supabase.from("lessons").select("id", { count: "exact", head: true }),
           supabase.from("test_questions").select("id", { count: "exact", head: true }),
-          supabase.from("device_progress").select("device_id"),
+          supabase.from("device_sessions").select("device_id", { count: "exact", head: true }),
           supabase.from("device_premium").select("device_id", { count: "exact", head: true }).eq("is_premium", true),
           supabase.from("payment_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
         ]);
-        const uniqueDevices = new Set((progress.data || []).map((p: any) => p.device_id)).size;
         return json({
           levels: levels.count ?? 0,
           lessons: lessons.count ?? 0,
           questions: questions.count ?? 0,
-          users: uniqueDevices,
+          users: sessions.count ?? 0,
           premium: premium.count ?? 0,
           pending_payments: pending.count ?? 0,
         });
