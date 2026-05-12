@@ -1,20 +1,26 @@
 // AI Tutor — Lovable AI Gateway
-// Streams chat responses for a given lesson context. Public endpoint.
+// Streams chat responses for a given lesson context. Refuses if level locked for device.
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+);
+
 const SYSTEM_PROMPT = `Siz "Polatov Boboyor" ingliz tili ilovasidagi do'stona AI o'qituvchisiz.
 Foydalanuvchi o'zbek yoki ingliz tilida savol berishi mumkin. Quyidagi qoidalarga rioya qiling:
 
 1. Agar foydalanuvchi o'zbek tilida yozsa — o'zbek tilida sodda, do'stona, qisqa javob bering. Misollar ingliz tilida bo'lsin va ularning o'zbekcha tarjimasi yoniga yozilsin.
 2. Agar foydalanuvchi ingliz tilida yozsa — ingliz tilida javob bering, lekin yangi yoki murakkab so'zlarning o'zbekcha tarjimasini qavs ichida bering.
-3. Doimo dars mavzusiga bog'lab tushuntiring. Faqat dars/grammatika/lug'at/talaffuz haqida gapiring.
+3. FAQAT shu darsning mavzusi haqida gapiring. Boshqa darajalar yoki yopiq darslar haqida so'rasa: "Bu hozirgi darsdan tashqari. Avval shu darsni o'rganaylik" deb qaytaring.
 4. Javoblar qisqa, aniq va emoji bilan bezatilgan bo'lsin (1-2 emoji).
-5. Markdown ishlating: **bold** muhim so'zlar uchun, ro'yxatlar va misollar uchun.
-6. Agar savol darsga aloqasiz bo'lsa, muloyimlik bilan dars mavzusiga qaytaring.`;
+5. Markdown ishlating: **bold** muhim so'zlar uchun, ro'yxatlar va misollar uchun.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
