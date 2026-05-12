@@ -1,19 +1,22 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Crown } from "lucide-react";
+import { ArrowLeft, Crown, LogIn } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { AiTutor } from "@/components/AiTutor";
 import { usePremium } from "@/hooks/usePremium";
+import { useSessionTracker } from "@/hooks/useSessionTracker";
 import { Button } from "@/components/ui/button";
 
 const LessonView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isPremium } = usePremium();
+  const { isLoggedIn, lessonsViewed, ping } = useSessionTracker();
   const [lesson, setLesson] = useState<any>(null);
   const [levelCode, setLevelCode] = useState("");
   const [loading, setLoading] = useState(true);
+  const [tracked, setTracked] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -25,8 +28,12 @@ const LessonView = () => {
         setLevelCode(lvl?.code || "");
       }
       setLoading(false);
+      if (data && !tracked) { ping("lesson_view"); setTracked(true); }
     })();
-  }, [id]);
+  }, [id, ping, tracked]);
+
+  // Auth gate after 3 free lessons
+  const mustAuth = !isLoggedIn && lessonsViewed > 3;
 
   if (loading) {
     return (
@@ -51,7 +58,17 @@ const LessonView = () => {
         </div>
         <h1 className="text-3xl font-extrabold mb-4">{lesson.title}</h1>
 
-        {requiresPremium ? (
+        {mustAuth ? (
+          <div className="glass rounded-2xl p-6 shadow-soft text-center">
+            <LogIn className="w-12 h-12 mx-auto mb-3 text-primary" />
+            <p className="font-bold mb-2">Ro'yxatdan o'ting</p>
+            <p className="text-sm text-muted-foreground mb-4">3 ta darsni ko'rdingiz! Davom etish uchun bepul akkaunt yarating — progressingiz saqlanadi.</p>
+            <Button onClick={() => navigate("/auth?mode=signup")} className="w-full bg-gradient-to-r from-primary via-secondary to-accent shadow-glow">
+              Ro'yxatdan o'tish
+            </Button>
+            <button onClick={() => navigate("/auth")} className="text-xs text-muted-foreground mt-3 underline">Akkauntim bor — kirish</button>
+          </div>
+        ) : requiresPremium ? (
           <div className="glass rounded-2xl p-6 shadow-soft text-center">
             <Crown className="w-12 h-12 mx-auto mb-3 text-amber-500" />
             <p className="font-bold mb-2">Premium dars</p>
