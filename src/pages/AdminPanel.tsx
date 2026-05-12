@@ -71,13 +71,19 @@ const AdminPanel = () => {
         <StatCard icon={CreditCard} label="Pending" value={stats?.pending_payments ?? "—"} />
       </div>
 
-      <Tabs defaultValue="content" className="px-6">
-        <TabsList className="grid grid-cols-4 w-full bg-muted rounded-2xl h-12 p-1 mb-4">
+      <Tabs defaultValue="users" className="px-6">
+        <TabsList className="grid grid-cols-5 w-full bg-muted rounded-2xl h-12 p-1 mb-4">
+          <TabsTrigger value="users" className="rounded-xl">Users</TabsTrigger>
           <TabsTrigger value="content" className="rounded-xl">Content</TabsTrigger>
           <TabsTrigger value="payments" className="rounded-xl">Payments</TabsTrigger>
           <TabsTrigger value="premium" className="rounded-xl">Premium</TabsTrigger>
           <TabsTrigger value="settings" className="rounded-xl">Card</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="users">
+          <UsersManager />
+        </TabsContent>
+
 
         <TabsContent value="content">
           {/* Levels list with lock toggle */}
@@ -442,6 +448,116 @@ const PremiumManager = () => {
 };
 
 export default AdminPanel;
+
+const UsersManager = () => {
+  const { toast } = useToast();
+  const [users, setUsers] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [grantId, setGrantId] = useState("");
+
+  const load = async (q = "") => {
+    setLoading(true);
+    try {
+      const r: any = await adminCall("list_users", { search: q, limit: 500 });
+      setUsers(r?.data || []);
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally { setLoading(false); }
+  };
+  useEffect(() => { load(); }, []);
+
+  const grant = async (device_id: string, plan: "monthly" | "yearly" = "yearly") => {
+    try {
+      await adminCall("set_premium", { device_id, is_premium: true, plan });
+      toast({ title: "Premium berildi", description: device_id });
+      load(search);
+    } catch (e: any) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+  const revoke = async (device_id: string) => {
+    try {
+      await adminCall("set_premium", { device_id, is_premium: false });
+      toast({ title: "Premium olib tashlandi" });
+      load(search);
+    } catch (e: any) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+  const block = async (device_id: string, blocked: boolean) => {
+    try {
+      await adminCall("block_device", { device_id, blocked });
+      toast({ title: blocked ? "Bloklandi" : "Blokdan chiqarildi" });
+      load(search);
+    } catch (e: any) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+  const copy = (txt: string) => {
+    navigator.clipboard.writeText(txt);
+    toast({ title: "Nusxalandi", description: txt.slice(0, 24) + "..." });
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="glass rounded-2xl p-4 shadow-soft">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Tezkor: ID bo'yicha premium berish</p>
+        <div className="flex gap-2">
+          <Input value={grantId} onChange={(e) => setGrantId(e.target.value)} placeholder="device_id (Telegram orqali yuborilgan)" className="h-11 rounded-xl font-mono text-xs" />
+          <Button onClick={() => grantId && grant(grantId)} className="rounded-xl bg-gradient-to-r from-amber-400 to-orange-500">
+            <Crown className="w-4 h-4" /> Ber
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && load(search)}
+          placeholder="device_id yoki email izlash..."
+          className="h-11 rounded-xl"
+        />
+        <Button onClick={() => load(search)} variant="outline" className="rounded-xl">Izlash</Button>
+      </div>
+
+      <p className="text-xs text-muted-foreground">{loading ? "Yuklanmoqda..." : `${users.length} ta foydalanuvchi`}</p>
+
+      <div className="space-y-2">
+        {users.map((u) => (
+          <div key={u.device_id} className="glass rounded-2xl p-3 shadow-soft">
+            <div className="flex items-start gap-2 mb-2">
+              <div className="flex-1 min-w-0">
+                <button onClick={() => copy(u.device_id)} className="font-mono text-xs truncate text-primary text-left block w-full">{u.device_id}</button>
+                {u.email && <p className="text-xs font-semibold mt-0.5">{u.email}</p>}
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {u.lessons_viewed} dars • {u.passed_levels?.join(", ") || "—"} • {new Date(u.last_seen).toLocaleString()}
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                {u.is_premium && <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 flex items-center gap-1"><Crown className="w-3 h-3" />PRO</span>}
+                {u.is_blocked && <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-destructive/20 text-destructive">BLOK</span>}
+              </div>
+            </div>
+            <div className="flex gap-1.5 flex-wrap">
+              {!u.is_premium ? (
+                <>
+                  <Button size="sm" onClick={() => grant(u.device_id, "monthly")} className="rounded-lg h-8 text-xs bg-gradient-to-r from-amber-400 to-orange-500">
+                    <Crown className="w-3 h-3" /> 1 oy
+                  </Button>
+                  <Button size="sm" onClick={() => grant(u.device_id, "yearly")} className="rounded-lg h-8 text-xs bg-gradient-to-r from-amber-500 to-pink-500">
+                    <Crown className="w-3 h-3" /> 1 yil
+                  </Button>
+                </>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => revoke(u.device_id)} className="rounded-lg h-8 text-xs">Bekor qilish</Button>
+              )}
+              <Button size="sm" variant="outline" onClick={() => block(u.device_id, !u.is_blocked)} className="rounded-lg h-8 text-xs">
+                {u.is_blocked ? "Blokdan chiqar" : "Blok"}
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 
 const SettingsManager = () => {
   const { toast } = useToast();

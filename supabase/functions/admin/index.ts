@@ -111,20 +111,19 @@ Deno.serve(async (req) => {
 
       // ----- Stats -----
       case "stats": {
-        const [levels, lessons, questions, progress, premium, pending] = await Promise.all([
+        const [levels, lessons, questions, sessions, premium, pending] = await Promise.all([
           supabase.from("levels").select("id", { count: "exact", head: true }),
           supabase.from("lessons").select("id", { count: "exact", head: true }),
           supabase.from("test_questions").select("id", { count: "exact", head: true }),
-          supabase.from("device_progress").select("device_id"),
+          supabase.from("device_sessions").select("device_id", { count: "exact", head: true }),
           supabase.from("device_premium").select("device_id", { count: "exact", head: true }).eq("is_premium", true),
           supabase.from("payment_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
         ]);
-        const uniqueDevices = new Set((progress.data || []).map((p: any) => p.device_id)).size;
         return json({
           levels: levels.count ?? 0,
           lessons: lessons.count ?? 0,
           questions: questions.count ?? 0,
-          users: uniqueDevices,
+          users: sessions.count ?? 0,
           premium: premium.count ?? 0,
           pending_payments: pending.count ?? 0,
         });
@@ -240,6 +239,37 @@ Deno.serve(async (req) => {
         }, { onConflict: "device_id" });
         if (error) return json({ error: error.message }, 400);
         return json({ ok: true });
+      }
+
+      // ----- Users (device sessions) -----
+      case "list_users": {
+        const { search, limit = 200 } = body.payload || {};
+        let q = supabase.from("device_sessions").select("*").order("last_seen", { ascending: false }).limit(limit);
+        if (search) q = q.or(`device_id.ilike.%${search}%,email.ilike.%${search}%`);
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        // Enrich with premium + progress
+        const ids = (data || []).map((d: any) => d.device_id);
+        const [{ data: prem }, { data: prog }] = await Promise.all([
+          supabase.from("device_premium").select("device_id,is_premium,is_blocked,expires_at").in("device_id", ids),
+          supabase.from("device_progress").select("device_id,level_code,passed").in("device_id", ids),
+        ]);
+        const pMap = new Map((prem || []).map((p: any) => [p.device_id, p]));
+        const progMap = new Map<string, string[]>();
+        (prog || []).forEach((p: any) => {
+          if (!p.passed) return;
+          const arr = progMap.get(p.device_id) || [];
+          arr.push(p.level_code);
+          progMap.set(p.device_id, arr);
+        });
+        const enriched = (data || []).map((d: any) => ({
+          ...d,
+          is_premium: pMap.get(d.device_id)?.is_premium || false,
+          is_blocked: pMap.get(d.device_id)?.is_blocked || false,
+          expires_at: pMap.get(d.device_id)?.expires_at || null,
+          passed_levels: progMap.get(d.device_id) || [],
+        }));
+        return json({ data: enriched });
       }
 
       default:

@@ -107,6 +107,36 @@ export type Database = {
         }
         Relationships: []
       }
+      device_sessions: {
+        Row: {
+          device_id: string
+          email: string | null
+          first_seen: string
+          last_seen: string
+          lessons_viewed: number
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          device_id: string
+          email?: string | null
+          first_seen?: string
+          last_seen?: string
+          lessons_viewed?: number
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          device_id?: string
+          email?: string | null
+          first_seen?: string
+          last_seen?: string
+          lessons_viewed?: number
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       lessons: {
         Row: {
           content: string | null

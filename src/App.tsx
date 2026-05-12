@@ -15,6 +15,7 @@ import LessonView from "./pages/LessonView";
 import LevelTest from "./pages/LevelTest";
 import Premium from "./pages/Premium";
 import Settings from "./pages/Settings";
+import Auth from "./pages/Auth";
 import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
@@ -31,7 +32,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-
+              <Route path="/auth" element={<Auth />} />
               <Route path="/app" element={<AppShell />}>
                 <Route index element={<Home />} />
                 <Route path="levels" element={<Levels />} />

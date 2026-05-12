@@ -3,6 +3,7 @@ import { Sparkles, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/contexts/I18nContext";
 import ReactMarkdown from "react-markdown";
+import { getDeviceId } from "@/lib/device";
 
 interface AiTutorProps {
   lesson: { title: string; content: string | null; level: string };
@@ -35,10 +36,11 @@ export const AiTutor = ({ lesson }: AiTutorProps) => {
     try {
       const res = await fetch(AI_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
         body: JSON.stringify({
           messages: next,
           lessonContext: { title: lesson.title, content: lesson.content, level: lesson.level },
+          device_id: getDeviceId(),
         }),
       });
 
