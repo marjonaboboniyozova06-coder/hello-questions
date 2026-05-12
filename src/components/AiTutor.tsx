@@ -3,6 +3,7 @@ import { Sparkles, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/contexts/I18nContext";
 import ReactMarkdown from "react-markdown";
+import { getDeviceId } from "@/lib/device";
 
 interface AiTutorProps {
   lesson: { title: string; content: string | null; level: string };

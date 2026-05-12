@@ -84,7 +84,7 @@ const LessonView = () => {
         )}
       </div>
 
-      {!requiresPremium && <AiTutor lesson={{ title: lesson.title, content: lesson.content, level: levelCode }} />}
+      {!requiresPremium && !mustAuth && <AiTutor lesson={{ title: lesson.title, content: lesson.content, level: levelCode }} />}
     </div>
   );
 };
