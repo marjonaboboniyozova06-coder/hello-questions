@@ -242,6 +242,37 @@ Deno.serve(async (req) => {
         return json({ ok: true });
       }
 
+      // ----- Users (device sessions) -----
+      case "list_users": {
+        const { search, limit = 200 } = body.payload || {};
+        let q = supabase.from("device_sessions").select("*").order("last_seen", { ascending: false }).limit(limit);
+        if (search) q = q.or(`device_id.ilike.%${search}%,email.ilike.%${search}%`);
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        // Enrich with premium + progress
+        const ids = (data || []).map((d: any) => d.device_id);
+        const [{ data: prem }, { data: prog }] = await Promise.all([
+          supabase.from("device_premium").select("device_id,is_premium,is_blocked,expires_at").in("device_id", ids),
+          supabase.from("device_progress").select("device_id,level_code,passed").in("device_id", ids),
+        ]);
+        const pMap = new Map((prem || []).map((p: any) => [p.device_id, p]));
+        const progMap = new Map<string, string[]>();
+        (prog || []).forEach((p: any) => {
+          if (!p.passed) return;
+          const arr = progMap.get(p.device_id) || [];
+          arr.push(p.level_code);
+          progMap.set(p.device_id, arr);
+        });
+        const enriched = (data || []).map((d: any) => ({
+          ...d,
+          is_premium: pMap.get(d.device_id)?.is_premium || false,
+          is_blocked: pMap.get(d.device_id)?.is_blocked || false,
+          expires_at: pMap.get(d.device_id)?.expires_at || null,
+          passed_levels: progMap.get(d.device_id) || [],
+        }));
+        return json({ data: enriched });
+      }
+
       default:
         return json({ error: "Unknown action" }, 400);
     }
