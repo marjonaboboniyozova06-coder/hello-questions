@@ -71,13 +71,19 @@ const AdminPanel = () => {
         <StatCard icon={CreditCard} label="Pending" value={stats?.pending_payments ?? "—"} />
       </div>
 
-      <Tabs defaultValue="content" className="px-6">
-        <TabsList className="grid grid-cols-4 w-full bg-muted rounded-2xl h-12 p-1 mb-4">
+      <Tabs defaultValue="users" className="px-6">
+        <TabsList className="grid grid-cols-5 w-full bg-muted rounded-2xl h-12 p-1 mb-4">
+          <TabsTrigger value="users" className="rounded-xl">Users</TabsTrigger>
           <TabsTrigger value="content" className="rounded-xl">Content</TabsTrigger>
           <TabsTrigger value="payments" className="rounded-xl">Payments</TabsTrigger>
           <TabsTrigger value="premium" className="rounded-xl">Premium</TabsTrigger>
           <TabsTrigger value="settings" className="rounded-xl">Card</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="users">
+          <UsersManager />
+        </TabsContent>
+
 
         <TabsContent value="content">
           {/* Levels list with lock toggle */}
