@@ -284,6 +284,15 @@ const Premium = () => {
                 </div>
               </div>
 
+              <div className="rounded-2xl p-4 mb-4 bg-amber-500/10 border border-amber-500/30 text-xs leading-relaxed">
+                <p className="font-extrabold text-amber-600 dark:text-amber-400 mb-1.5">⚠️ {lang === "uz" ? "Diqqat — eslatma" : "Important reminder"}</p>
+                <p className="text-foreground/80">
+                  {lang === "uz"
+                    ? "To'lovni faqat YUQORIDAGI kartaga aniq summada qiling. Boshqa kartaga yuborilsa, Premium ochilmaydi va pul qaytarilmaydi. To'lovdan keyin chek skrinshotini va o'zingizning ID'ingizni Telegram orqali adminga yuboring — shunda 5-10 daqiqada faollashtiramiz."
+                    : "Only transfer the EXACT amount to the card above. Wrong card = no refund. After paying, send the receipt screenshot and your ID to the admin on Telegram for fast activation."}
+                </p>
+              </div>
+
               <div className="glass rounded-2xl p-4 mb-5 text-xs text-muted-foreground space-y-1.5">
                 <p>📲 1. {lang === "uz" ? `${method === "click" ? "Click" : method === "payme" ? "Payme" : "Bank"} ilovasini oching` : `Open ${method} app`}</p>
                 <p>💳 2. {lang === "uz" ? "Yuqoridagi kartaga aniq summani o'tkazing" : "Transfer the exact amount to the card above"}</p>
