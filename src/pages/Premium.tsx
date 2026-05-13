@@ -29,15 +29,21 @@ const Premium = () => {
   const [method, setMethod] = useState<Method | null>(null);
   const [step, setStep] = useState<Step>("plan");
   const [adminCard, setAdminCard] = useState<{ card_number: string; card_holder: string; bank: string; phone: string } | null>(null);
+  const [tgUsername, setTgUsername] = useState<string>("");
   const [senderCard, setSenderCard] = useState("");
   const [senderName, setSenderName] = useState("");
   const [loading, setLoading] = useState(false);
+  const deviceId = getDeviceId();
 
   const amount = plan === "monthly" ? 29000 : 199000;
 
   useEffect(() => {
     supabase.functions.invoke("payments", { body: { action: "get_admin_card" } }).then(({ data }) => {
       setAdminCard(data?.card ?? null);
+    });
+    supabase.from("app_settings").select("value").eq("key", "admin_telegram").maybeSingle().then(({ data }) => {
+      const v: any = data?.value;
+      if (v?.username) setTgUsername(String(v.username).replace(/^@/, ""));
     });
   }, []);
 
@@ -124,20 +130,44 @@ const Premium = () => {
   }
 
   if (step === "pending") {
+    const tgText = encodeURIComponent(
+      `Salom! Premium uchun to'lov qildim.\n\nID: ${deviceId}\nReja: ${plan === "yearly" ? "1 yil" : "1 oy"}\nSumma: ${amount.toLocaleString()} UZS\n\nChekni rasmga olib yubordim.`
+    );
+    const tgUrl = tgUsername ? `https://t.me/${tgUsername}?text=${tgText}` : null;
     return (
       <div className="px-6 pt-10 pb-6">
-        <div className="glass rounded-3xl p-8 text-center shadow-soft">
+        <div className="glass rounded-3xl p-6 text-center shadow-soft mb-4">
           <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-glow animate-pulse-glow">
             <Loader2 className="w-10 h-10 text-white animate-spin" />
           </div>
           <h1 className="text-2xl font-extrabold mb-2">{lang === "uz" ? "Tekshirilmoqda" : "Verifying"}</h1>
           <p className="text-sm text-muted-foreground">
             {lang === "uz"
-              ? "Pulingiz kelishi tekshirilmoqda. Tasdiqlangach Premium avtomatik ochiladi."
-              : "We are verifying your transfer. Premium will unlock once confirmed."}
+              ? "So'rovingiz qabul qilindi. Tezroq tasdiqlash uchun chek skrinshotini Telegram'dan adminga yuboring — ID bilan birga."
+              : "Send the receipt screenshot together with your ID to the admin on Telegram for faster verification."}
           </p>
         </div>
-        <Button onClick={() => { reload(); }} className="w-full h-14 rounded-2xl mt-4 bg-gradient-to-r from-primary to-secondary shadow-glow">
+
+        <div className="glass rounded-2xl p-4 mb-3 shadow-soft">
+          <p className="text-[11px] uppercase font-bold text-muted-foreground mb-1">{lang === "uz" ? "Sizning ID" : "Your ID"}</p>
+          <div className="flex items-center justify-between gap-2">
+            <code className="text-xs font-mono break-all">{deviceId}</code>
+            <button onClick={() => copy(deviceId)} className="w-9 h-9 rounded-xl glass flex items-center justify-center flex-shrink-0">
+              <Copy className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {tgUrl ? (
+          <Button onClick={() => window.open(tgUrl, "_blank")} className="w-full h-14 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 shadow-glow font-bold mb-2">
+            {lang === "uz" ? "Telegram orqali yuborish" : "Send on Telegram"}
+          </Button>
+        ) : (
+          <p className="text-xs text-center text-muted-foreground mb-2">
+            {lang === "uz" ? "Admin Telegram'ini sozlamagan." : "Admin Telegram is not set."}
+          </p>
+        )}
+        <Button onClick={() => { reload(); }} variant="outline" className="w-full h-12 rounded-2xl">
           {lang === "uz" ? "Yangilash" : "Refresh"}
         </Button>
       </div>
