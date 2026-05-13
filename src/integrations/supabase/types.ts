@@ -112,6 +112,7 @@ export type Database = {
           device_id: string
           email: string | null
           first_seen: string
+          full_name: string | null
           last_seen: string
           lessons_viewed: number
           user_agent: string | null
@@ -121,6 +122,7 @@ export type Database = {
           device_id: string
           email?: string | null
           first_seen?: string
+          full_name?: string | null
           last_seen?: string
           lessons_viewed?: number
           user_agent?: string | null
@@ -130,6 +132,7 @@ export type Database = {
           device_id?: string
           email?: string | null
           first_seen?: string
+          full_name?: string | null
           last_seen?: string
           lessons_viewed?: number
           user_agent?: string | null

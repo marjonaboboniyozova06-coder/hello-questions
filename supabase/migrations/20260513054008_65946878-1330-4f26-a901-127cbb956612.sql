@@ -1,0 +1,1 @@
+ALTER TABLE public.device_sessions ADD COLUMN IF NOT EXISTS full_name text;
