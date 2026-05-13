@@ -562,65 +562,109 @@ const UsersManager = () => {
 const SettingsManager = () => {
   const { toast } = useToast();
   const [card, setCard] = useState({ card_number: "", card_holder: "", bank: "Humo", phone: "" });
+  const [tg, setTg] = useState({ username: "" });
+  const [poli, setPoli] = useState({ enabled: false });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     adminCall<any>("get_settings").then((res) => {
-      const ac = (res?.data || []).find((s: any) => s.key === "admin_card");
+      const arr = res?.data || [];
+      const ac = arr.find((s: any) => s.key === "admin_card");
       if (ac?.value) setCard({ card_number: "", card_holder: "", bank: "Humo", phone: "", ...ac.value });
+      const at = arr.find((s: any) => s.key === "admin_telegram");
+      if (at?.value?.username) setTg({ username: String(at.value.username).replace(/^@/, "") });
+      const pp = arr.find((s: any) => s.key === "poli_premium_only");
+      if (pp?.value) setPoli({ enabled: !!pp.value.enabled });
     }).catch(() => {});
   }, []);
 
-  const save = async () => {
+  const saveCard = async () => {
     setLoading(true);
     try {
       await adminCall("update_setting", { key: "admin_card", value: card });
       toast({ title: "Saved", description: "Karta yangilandi" });
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
+  };
+
+  const saveTg = async () => {
+    try {
+      await adminCall("update_setting", { key: "admin_telegram", value: { username: tg.username.replace(/^@/, "") } });
+      toast({ title: "Saved", description: "Telegram saqlandi" });
+    } catch (e: any) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+
+  const togglePoli = async (enabled: boolean) => {
+    setPoli({ enabled });
+    try {
+      await adminCall("update_setting", { key: "poli_premium_only", value: { enabled } });
+      toast({ title: enabled ? "Poli faqat Premium" : "Poli hammaga ochiq" });
+    } catch (e: any) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
   return (
-    <div className="glass rounded-2xl p-5 shadow-soft space-y-3">
-      <h2 className="text-lg font-bold mb-2">Admin to'lov kartasi</h2>
-      <p className="text-xs text-muted-foreground mb-3">
-        Bu karta foydalanuvchilarga to'lov uchun ko'rsatiladi. Pul tushgach Payments tabidan tasdiqlang.
-      </p>
-      <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Karta raqami</label>
-        <Input
-          value={card.card_number}
-          onChange={(e) => setCard({ ...card, card_number: e.target.value.replace(/\D/g, "").slice(0, 16) })}
-          placeholder="0000000000000000"
-          className="h-12 rounded-xl font-mono mt-1"
-          inputMode="numeric"
-        />
-      </div>
-      <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Karta egasi</label>
-        <Input
-          value={card.card_holder}
-          onChange={(e) => setCard({ ...card, card_holder: e.target.value.toUpperCase() })}
-          placeholder="POLATOV BOBOYOR"
-          className="h-12 rounded-xl uppercase mt-1"
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
+    <div className="space-y-4">
+      <div className="glass rounded-2xl p-5 shadow-soft space-y-3">
+        <h2 className="text-lg font-bold mb-2">Admin to'lov kartasi</h2>
+        <p className="text-xs text-muted-foreground mb-3">
+          Bu karta foydalanuvchilarga to'lov uchun ko'rsatiladi. Pul tushgach Payments tabidan tasdiqlang.
+        </p>
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Bank</label>
-          <Input value={card.bank} onChange={(e) => setCard({ ...card, bank: e.target.value })} className="h-12 rounded-xl mt-1" />
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Karta raqami</label>
+          <Input
+            value={card.card_number}
+            onChange={(e) => setCard({ ...card, card_number: e.target.value.replace(/\D/g, "").slice(0, 16) })}
+            placeholder="0000000000000000"
+            className="h-12 rounded-xl font-mono mt-1"
+            inputMode="numeric"
+          />
         </div>
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Telefon</label>
-          <Input value={card.phone} onChange={(e) => setCard({ ...card, phone: e.target.value })} placeholder="+998..." className="h-12 rounded-xl mt-1" />
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Karta egasi</label>
+          <Input
+            value={card.card_holder}
+            onChange={(e) => setCard({ ...card, card_holder: e.target.value.toUpperCase() })}
+            placeholder="POLATOV BOBOYOR"
+            className="h-12 rounded-xl uppercase mt-1"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Bank</label>
+            <Input value={card.bank} onChange={(e) => setCard({ ...card, bank: e.target.value })} className="h-12 rounded-xl mt-1" />
+          </div>
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Telefon</label>
+            <Input value={card.phone} onChange={(e) => setCard({ ...card, phone: e.target.value })} placeholder="+998..." className="h-12 rounded-xl mt-1" />
+          </div>
+        </div>
+        <Button onClick={saveCard} disabled={loading} className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-secondary shadow-glow font-bold mt-2">
+          {loading ? "..." : "Saqlash"}
+        </Button>
+      </div>
+
+      <div className="glass rounded-2xl p-5 shadow-soft space-y-3">
+        <h2 className="text-lg font-bold">Telegram (chek qabul qilish)</h2>
+        <p className="text-xs text-muted-foreground">Foydalanuvchi to'lovdan keyin chek + ID'ni shu username'ga yuboradi.</p>
+        <div className="flex gap-2">
+          <span className="h-12 px-3 flex items-center rounded-xl bg-muted text-sm font-bold">@</span>
+          <Input value={tg.username} onChange={(e) => setTg({ username: e.target.value.replace(/^@/, "") })} placeholder="polatov_admin" className="h-12 rounded-xl" />
+          <Button onClick={saveTg} className="h-12 rounded-xl">Saqlash</Button>
         </div>
       </div>
-      <Button onClick={save} disabled={loading} className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-secondary shadow-glow font-bold mt-2">
-        {loading ? "..." : "Saqlash"}
-      </Button>
+
+      <div className="glass rounded-2xl p-5 shadow-soft">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold">Poli AI yordamchi</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Yoqilsa — Poli AI <span className="font-bold">faqat Premium</span> foydalanuvchilar uchun ochiq bo'ladi. O'chirilsa — hammaga.
+            </p>
+          </div>
+          <Switch checked={poli.enabled} onCheckedChange={togglePoli} />
+        </div>
+      </div>
     </div>
   );
 };
