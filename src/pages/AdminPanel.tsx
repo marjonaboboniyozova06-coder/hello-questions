@@ -523,6 +523,7 @@ const UsersManager = () => {
           <div key={u.device_id} className="glass rounded-2xl p-3 shadow-soft">
             <div className="flex items-start gap-2 mb-2">
               <div className="flex-1 min-w-0">
+                {u.full_name && <p className="text-sm font-extrabold mb-0.5">{u.full_name}</p>}
                 <button onClick={() => copy(u.device_id)} className="font-mono text-xs truncate text-primary text-left block w-full">{u.device_id}</button>
                 {u.email && <p className="text-xs font-semibold mt-0.5">{u.email}</p>}
                 <p className="text-[11px] text-muted-foreground mt-0.5">
