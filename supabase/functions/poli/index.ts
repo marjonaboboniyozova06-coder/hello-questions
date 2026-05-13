@@ -36,14 +36,28 @@ Deno.serve(async (req) => {
     }
 
     // Build context: unlocked levels for this device
-    const [{ data: levels }, { data: progress }, { data: prem }] = await Promise.all([
+    const [{ data: levels }, { data: progress }, { data: prem }, { data: setting }] = await Promise.all([
       supabase.from("levels").select("code,title,description,sort_order,is_locked,is_premium").order("sort_order"),
       device_id ? supabase.from("device_progress").select("level_code,passed").eq("device_id", device_id) : Promise.resolve({ data: [] }),
-      device_id ? supabase.from("device_premium").select("is_premium").eq("device_id", device_id).maybeSingle() : Promise.resolve({ data: null }),
+      device_id ? supabase.from("device_premium").select("is_premium,expires_at").eq("device_id", device_id).maybeSingle() : Promise.resolve({ data: null }),
+      supabase.from("app_settings").select("value").eq("key", "poli_premium_only").maybeSingle(),
     ]);
 
+    const premRow: any = prem;
+    let isPremium = !!premRow?.is_premium;
+    if (isPremium && premRow?.expires_at && new Date(premRow.expires_at).getTime() < Date.now()) {
+      isPremium = false;
+    }
     const passed = new Set((progress || []).filter((p: any) => p.passed).map((p: any) => p.level_code));
-    const isPremium = !!(prem as any)?.is_premium;
+
+    // Global Poli lock — premium-only mode
+    const premiumOnly = !!(setting as any)?.value?.enabled;
+    if (premiumOnly && !isPremium) {
+      return new Response(JSON.stringify({
+        error: "Poli yordamchisi hozir faqat Premium foydalanuvchilar uchun ochiq. Iltimos Premium oling.",
+      }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
 
     const sorted = [...(levels || [])].sort((a: any, b: any) => a.sort_order - b.sort_order);
     const unlockedCodes: string[] = [];
