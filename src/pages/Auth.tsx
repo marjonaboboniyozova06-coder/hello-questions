@@ -11,11 +11,13 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 const Auth = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { toast } = useToast();
   const [mode, setMode] = useState<"login" | "signup">(
     params.get("mode") === "signup" ? "signup" : "login"
   );
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,14 +33,26 @@ const Auth = () => {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        if (!firstName.trim() || !lastName.trim()) {
+          throw new Error(lang === "uz" ? "Ism va familiya majburiy" : "First and last name required");
+        }
+        const fullName = `${firstName.trim()} ${lastName.trim()}`;
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/app` },
+          options: {
+            emailRedirectTo: `${window.location.origin}/app`,
+            data: { first_name: firstName.trim(), last_name: lastName.trim(), full_name: fullName },
+          },
         });
         if (error) throw error;
-        toast({ title: "✓", description: "Account created. You can sign in now." });
-        setMode("login");
+        // If session is returned (auto-confirm), go straight in
+        if (data.session) {
+          navigate("/app", { replace: true });
+        } else {
+          toast({ title: "✓", description: lang === "uz" ? "Akkaunt yaratildi. Endi kirishingiz mumkin." : "Account created. You can sign in now." });
+          setMode("login");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -53,7 +67,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen gradient-mesh flex flex-col">
-      <div className="mx-auto w-full max-w-md px-6 pt-12 safe-top">
+      <div className="mx-auto w-full max-w-md px-6 pt-12 pb-10 safe-top">
         <button
           onClick={() => navigate("/")}
           className="w-10 h-10 rounded-full glass flex items-center justify-center mb-8"
@@ -73,6 +87,34 @@ const Auth = () => {
         <p className="text-muted-foreground mb-8">{t("welcome")} 👋</p>
 
         <form onSubmit={submit} className="space-y-4">
+          {mode === "signup" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {lang === "uz" ? "Ism" : lang === "ru" ? "Имя" : "First name"}
+                </Label>
+                <Input
+                  required
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="h-14 rounded-2xl mt-1 bg-card border-border"
+                  placeholder={lang === "uz" ? "Ism" : "First"}
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {lang === "uz" ? "Familiya" : lang === "ru" ? "Фамилия" : "Last name"}
+                </Label>
+                <Input
+                  required
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="h-14 rounded-2xl mt-1 bg-card border-border"
+                  placeholder={lang === "uz" ? "Familiya" : "Last"}
+                />
+              </div>
+            </div>
+          )}
           <div>
             <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {t("email")}

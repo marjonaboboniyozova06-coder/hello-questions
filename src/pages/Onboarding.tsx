@@ -44,7 +44,7 @@ const Onboarding = () => {
 
   const finish = () => {
     localStorage.setItem("linguo-onboarded", "1");
-    navigate("/app");
+    navigate("/auth?mode=signup");
   };
 
   const next = () => {
