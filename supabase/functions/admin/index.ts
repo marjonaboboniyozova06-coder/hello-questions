@@ -245,7 +245,7 @@ Deno.serve(async (req) => {
       case "list_users": {
         const { search, limit = 200 } = body.payload || {};
         let q = supabase.from("device_sessions").select("*").order("last_seen", { ascending: false }).limit(limit);
-        if (search) q = q.or(`device_id.ilike.%${search}%,email.ilike.%${search}%`);
+        if (search) q = q.or(`device_id.ilike.%${search}%,email.ilike.%${search}%,full_name.ilike.%${search}%`);
         const { data, error } = await q;
         if (error) return json({ error: error.message }, 400);
         // Enrich with premium + progress

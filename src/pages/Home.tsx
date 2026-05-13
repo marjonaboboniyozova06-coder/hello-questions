@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useI18n } from "@/contexts/I18nContext";
 import { useLevels, useProgress, computeUnlocked } from "@/hooks/useContent";
 import { usePremium } from "@/hooks/usePremium";
+import { supabase } from "@/integrations/supabase/client";
 import { Lock, CheckCircle2, Flame, Trophy, Crown } from "lucide-react";
 import heroStudent from "@/assets/hero-student.png";
 
@@ -19,6 +21,15 @@ const Home = () => {
   const { levels } = useLevels();
   const { passed } = useProgress();
   const { isPremium } = usePremium();
+  const [fullName, setFullName] = useState<string>("");
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const m: any = data.user?.user_metadata || {};
+      const name = m.full_name || [m.first_name, m.last_name].filter(Boolean).join(" ") || (data.user?.email ? data.user.email.split("@")[0] : "");
+      setFullName(name);
+    });
+  }, []);
 
   const unlocked = computeUnlocked(levels, passed);
   const currentLevel = levels.find((l) => unlocked[l.code] && !passed.has(l.code)) || levels[0];
@@ -27,9 +38,9 @@ const Home = () => {
     <div className="px-6 pt-10 pb-6 relative">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div>
+        <div className="min-w-0 flex-1 mr-3">
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">{t("welcome")}</p>
-          <h1 className="text-2xl font-extrabold text-gradient">{t("appName")}</h1>
+          <h1 className="text-2xl font-extrabold text-gradient truncate">{fullName || t("appName")}</h1>
         </div>
         {isPremium ? (
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 shadow-glow">
