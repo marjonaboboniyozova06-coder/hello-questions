@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { action, device_id, email, user_id, user_agent } = await req.json();
+    const { action, device_id, email, user_id, user_agent, full_name } = await req.json();
     if (!device_id || typeof device_id !== "string") {
       return new Response(JSON.stringify({ error: "device_id required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     if (!existing) {
       await supabase.from("device_sessions").insert({
         device_id, last_seen: new Date().toISOString(), lessons_viewed: action === "lesson_view" ? 1 : 0,
-        email: email || null, user_id: user_id || null, user_agent: user_agent || null,
+        email: email || null, user_id: user_id || null, user_agent: user_agent || null, full_name: full_name || null,
       });
       return new Response(JSON.stringify({ ok: true, lessons_viewed: action === "lesson_view" ? 1 : 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -41,6 +41,7 @@ Deno.serve(async (req) => {
     if (email) updates.email = email;
     if (user_id) updates.user_id = user_id;
     if (user_agent) updates.user_agent = user_agent;
+    if (full_name) updates.full_name = full_name;
     if (action === "lesson_view") updates.lessons_viewed = (existing.lessons_viewed || 0) + 1;
 
     await supabase.from("device_sessions").update(updates).eq("device_id", device_id);

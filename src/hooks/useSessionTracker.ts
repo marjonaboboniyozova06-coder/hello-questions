@@ -17,11 +17,14 @@ export function useSessionTracker() {
 
   const ping = useCallback(async (action: "ping" | "lesson_view") => {
     try {
+      const m: any = session?.user?.user_metadata || {};
+      const fullName = m.full_name || [m.first_name, m.last_name].filter(Boolean).join(" ") || null;
       const { data } = await supabase.functions.invoke("track", {
         body: {
           action, device_id: deviceId,
           email: session?.user?.email,
           user_id: session?.user?.id,
+          full_name: fullName,
           user_agent: navigator.userAgent.slice(0, 200),
         },
       });
